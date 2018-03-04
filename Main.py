@@ -5,6 +5,7 @@ from Adafruit_MotorHAT import Adafruit_MotorHAT, Adafruit_DCMotor
 import RPi.GPIO as GPIO
 import time
 import atexit
+import random
 from transitions import Machine
 
 class VacuumStateMachine(object):
@@ -68,6 +69,8 @@ vacuumState = VacuumStateMachine()
 leftObstaclePin = 40
 rightObstaclePin = 38
 backObstaclePin = 35
+baseSpeed = 200
+slowSpeed = 50
 
 # create a default object, no changes to I2C address or frequency
 mh = Adafruit_MotorHAT(addr=0x60)
@@ -105,12 +108,12 @@ def detectObstacle(Pin):
 def starting():
     print("starting")
     #start the brush
-    brushMotor.setSpeed(200)
+    brushMotor.setSpeed(baseSpeed)
     brushMotor.run(Adafruit_MotorHAT.FORWARD);
     #loop until edge found
-    leftMotor.setSpeed(50)
+    leftMotor.setSpeed(slowSpeed)
     leftMotor.run(Adafruit_MotorHAT.FORWARD);
-    rightMotor.setSpeed(200)
+    rightMotor.setSpeed(baseSpeed)
     rightMotor.run(Adafruit_MotorHAT.FORWARD);
     while detectObstacle(rightObstaclePin):
         time.sleep(.05)
@@ -123,24 +126,41 @@ def cleaningSurfaceTurn():
     rightMotor.run(Adafruit_MotorHAT.FORWARD);
     if(not detectObstacle(rightObstaclePin)):
         #right sensor is off the edge
-        leftMotor.setSpeed(50)
+        leftMotor.setSpeed(slowSpeed)
         leftMotor.run(Adafruit_MotorHAT.BACKWARD);
         while detectObstacle(backObstaclePin):
             time.sleep(.05)        
     else:
         #left sensor is off the edge
-        rightMotor.setSpeed(50)
+        rightMotor.setSpeed(slowSpeed)
         rightMotor.run(Adafruit_MotorHAT.BACKWARD);
         while detectObstacle(backObstaclePin):
             time.sleep(.05)
     
 def cleaningTableSurface():
     print("Cleaning Table Surface")
-    leftMotor.setSpeed(0)
+    leftMotor.setSpeed(baseSpeed)
     leftMotor.run(Adafruit_MotorHAT.FORWARD);
-    rightMotor.setSpeed(0)
+    rightMotor.setSpeed(baseSpeed)
     rightMotor.run(Adafruit_MotorHAT.FORWARD);
+    #have a 1 in x chance of turning
+    if(random.randint(0, 50) == 0):
+        if(random.randint(0, 1) == 0):
+            #turn right
+            leftMotor.setSpeed(0)
+            leftMotor.run(Adafruit_MotorHAT.FORWARD);
+        else:
+            #turn left
+            rightMotor.setSpeed(0)
+            rightMotor.run(Adafruit_MotorHAT.FORWARD);
+        time.sleep(.1)
+    time.sleep(.05)
     
+def cleaningTableEdges():
+    #wobble back and forth keeping the sensor on the edge of the table
+    
+def cleaningEdgesTurn():
+    #back up a bit, turn a bit and head forward until edge detected.
 
 def loop():
 	while True:
@@ -158,7 +178,7 @@ def loop():
                 vacuumState.edgeDetected()
                 
             time.sleep(.02)
-			
+
 
 def destroy():
 	GPIO.cleanup()                     # Release resource
