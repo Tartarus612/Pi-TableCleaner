@@ -157,9 +157,11 @@ def cleaningTableSurface():
     time.sleep(.05)
     
 def cleaningTableEdges():
+    print("Cleaning Table Edges")
     #wobble back and forth keeping the sensor on the edge of the table
     
 def cleaningEdgesTurn():
+    print("Cleaning Table Turn")
     #back up a bit, turn a bit and head forward until edge detected.
 
 def loop():
